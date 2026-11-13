@@ -8,10 +8,14 @@ import { resolveMockOffers } from '../core/mock-offer-resolver';
 
 const pause = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 export type LoadingKind = 'search' | null;
+export type SearchMode = 'guided' | 'compact';
 
 interface FlowValue {
   query: FlightSearchQuery;
   draft: FlightSearchQuery;
+  searchMode: SearchMode;
+  setSearchMode: (mode: SearchMode) => void;
+  submitSearch: () => Promise<void>;
   editing: boolean;
   step: number;
   furthestStep: number;
@@ -40,6 +44,7 @@ export function FlightFlowProvider({ children }: { children: ReactNode }) {
   const [query, setQuery] = useState<FlightSearchQuery>(() => defaultQuery());
   const [draft, setDraftInner] = useState<FlightSearchQuery>(() => defaultQuery());
   const [editing, setEditing] = useState(false);
+  const [searchMode, setSearchModeInner] = useState<SearchMode>('guided');
   const [step, setStep] = useState(0);
   const [furthestStep, setFurthestStep] = useState(0);
   const [offers, setOffers] = useState<FlightOffer[]>([]);
@@ -47,6 +52,7 @@ export function FlightFlowProvider({ children }: { children: ReactNode }) {
   const [selectedId, setSelectedId] = useState<RecommendationKind | null>(null);
   const [loading, setLoading] = useState<LoadingKind>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const setSearchMode = useCallback((mode: SearchMode) => { setSearchModeInner(mode); setValidationError(null); }, []);
 
   const selectedOffer = useMemo(() => offers.find(offer => offer.id === selectedId) ?? null, [offers, selectedId]);
   const setDraft = useCallback((next: FlightSearchQuery) => {
@@ -81,18 +87,11 @@ export function FlightFlowProvider({ children }: { children: ReactNode }) {
     navigate('/results');
   }, [query, navigate]);
 
-  const nextStep = useCallback(async () => {
-    const issue = validateStep(draft, step);
+  // Both the guided wizard and the compact bar use exactly the same validation,
+  // simulated loading and offer resolution. Only their presentation differs.
+  const submitSearch = useCallback(async () => {
+    const issue = validateQuery(draft);
     if (issue) { setValidationError(issue); return; }
-    if (step < 2) {
-      const next = step + 1;
-      setStep(next);
-      setFurthestStep(current => Math.max(current, next));
-      setValidationError(null);
-      return;
-    }
-    const issueAnywhere = validateQuery(draft);
-    if (issueAnywhere) { setValidationError(issueAnywhere); return; }
     if (hasResults && JSON.stringify(query) === JSON.stringify(draft)) {
       setEditing(false);
       setValidationError(null);
@@ -110,7 +109,20 @@ export function FlightFlowProvider({ children }: { children: ReactNode }) {
     setValidationError(null);
     setLoading(null);
     navigate('/results');
-  }, [draft, step, editing, hasResults, query, navigate]);
+  }, [draft, editing, hasResults, query, navigate]);
+
+  const nextStep = useCallback(async () => {
+    const issue = validateStep(draft, step);
+    if (issue) { setValidationError(issue); return; }
+    if (step < 2) {
+      const next = step + 1;
+      setStep(next);
+      setFurthestStep(current => Math.max(current, next));
+      setValidationError(null);
+      return;
+    }
+    await submitSearch();
+  }, [draft, step, submitSearch]);
 
   const selectOffer = useCallback((id: RecommendationKind) => {
     setSelectedId(current => current === id ? null : id);
@@ -136,7 +148,7 @@ export function FlightFlowProvider({ children }: { children: ReactNode }) {
   }, [navigate]);
 
   const value: FlowValue = {
-    query, draft, editing, step, furthestStep, offers, selectedId, selectedOffer,
+    query, draft, searchMode, setSearchMode, submitSearch, editing, step, furthestStep, offers, selectedId, selectedOffer,
     hasResults, loading, validationError, setDraft, goToStep, nextStep,
     previousStep, beginEdit, cancelEdit, selectOffer, finishDemo, backToResults, restart,
   };

@@ -102,8 +102,10 @@ function exampleDeparture(query: FlightSearchQuery): Date {
 }
 function exampleReturn(query: FlightSearchQuery, departure: Date): Date {
   if (query.returnMode === 'exact' && query.returnDate) return new Date(`${query.returnDate}T12:00:00`);
-  const lengths: Record<StayLength, number> = { weekend: 2, '1-3': 3, '4-7': 5, '8-14': 10, '15+': 16 };
-  return plusDays(departure, query.returnMode === 'flexible' ? 6 : lengths[query.stayLength]);
+  // 'any' has an explicitly disclosed limit of 30 days. We use a 6-day example
+  // in this static POC; a real search would evaluate many outbound/return pairs.
+  const lengths: Record<StayLength, number> = { weekend: 2, '1-3': 3, '4-7': 5, '8-14': 10, '15-21': 18, any: 6 };
+  return plusDays(departure, lengths[query.stayLength]);
 }
 
 type Itinerary = 'connection' | 'earlyDirect' | 'daytimeDirect';

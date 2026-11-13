@@ -2,19 +2,29 @@
 
 > **What if finding a flight was as simple as describing how you want to travel?**
 
-FlightFlow is an independent, bilingual (ES/EN) **flight search and selection proof of concept**. It explores an intent-first search, invisible fare-family resolution, and a short, progressively disclosed booking entry point.
+FlightFlow is an independent, bilingual (ES/EN) **flight search and selection proof of concept**. It explores an intent-first search, invisible fare-family resolution, and **two interchangeable search experiences**: a step-by-step wizard and a compact flight search bar.
 
 **This demo intentionally stops after flight selection.** It does not collect passenger identities or payment details, make bookings, send emails, or issue tickets. Routes, departure times, prices, fare availability and benefits are fictional.
 
 ## Demo flow
 
+Choose **Step by step** (default) or **Search bar** on the landing screen. Both share the same in-memory query and mock pricing engine, and switching modes preserves your answers.
+
+**Step by step** has three steps:
+
 1. **Route** — Enter origin and destination; choose one way or round trip. Starts at **Barcelona → Madrid, one way** to match the standalone HTML demo.
 2. **Dates** — Search by flexible windows, precise dates, or trip length. More date ranges are available on demand.
 3. **Your trip** — Set traveller counts and required amenities. Adults and four core needs appear first; children, infants and extra preferences can be expanded.
-4. **Flight results** — Compare the cheapest complete offer with a better-balanced alternative only when its benefit is meaningful. Click an entire flight row to choose; no commercial fare-family grid is shown. For equivalent adult fares, group total and per-person amounts are displayed.
-5. **Finish demo** — After selecting a flight, press **Finish demo** to see an informational end screen with your chosen itinerary, total illustrative price and a clear statement of what a real booking would do next. Return to results or start a new search.
+**Search bar** offers those same settings in a responsive horizontal bar: origin, destination, date windows (including exact dates), optional return, passenger counts, and a preferences popover with all eight requirements. It also starts with **Barcelona → Madrid, one way**. Date options and requirements can be expanded without opening a separate page.
 
-To edit a search, **Edit** returns to the **same wizard** with the previous answers preserved. Search results are only replaced after confirming changes on step 3; cancelling preserves the current results and selection.
+For round trips, return is either **Duration** (a stay range) or **Exact date**. The former includes an explicit **No preference (up to 30 days)** option; there is no ambiguous separate “Flexible return” mode.
+
+After submitting either mode, the same results follow:
+
+4. **Flight results** — Compare the cheapest complete offer with a better-balanced alternative only when its benefit is meaningful. Click an entire flight row to choose; no commercial fare-family grid is shown. For equivalent adult fares, group total and per-person amounts are displayed.
+5. **Finish demo** — After selecting a flight, press **Finish demo** to see a compact informational screen showing the specific selected departure/return dates, times, the illustrative total, and what a real booking would do next. Return to results or start a new search.
+
+To edit a search, **Edit** returns to the **same search mode** with the previous answers preserved. You can also switch between modes during editing. Search results are only replaced after confirming changes on step 3; cancelling preserves the current results and selection.
 
 ## Main product ideas
 
@@ -26,14 +36,14 @@ To edit a search, **Edit** returns to the **same wizard** with the previous answ
 
 For rationale, see [UX decisions](docs/UX_DECISIONS.md), [fare model](docs/FARE_MODEL.md), [architecture](docs/ARCHITECTURE.md) and [visual system](docs/VISUAL_SYSTEM.md).
 
-## What's new in v0.9.6
+## What's new in v0.9.8
 
-- Removed the passengers, payment, and simulated purchase pages and their state/contracts.
-- Added a concise **selection complete** informational screen, matching the standalone HTML demo.
-- Kept a separate selection gesture and **Finish demo** action so the user can compare or change flights before ending.
-- Added **Back to flights** and **New search** controls on the final screen.
-- Updated all active copy, ES/EN translations, routes, tests and docs to reflect this limited scope.
-- Preserved the FlightFlow v0.9.5 visual polish: **Lucide React**, **Motion for React**, **Plus Jakarta Sans Variable** and responsive design.
+- Renamed the two presentation choices to **Step by step / Search bar** (**Paso a paso / Barra de búsqueda** in Spanish).
+- Simplified the round-trip return contract to **Duration / Exact date** in both modes. Duration supports weekend, 1–3, 4–7, 8–14, 15–21 days, or a no-preference window bounded to 30 days; the mock resolver uses an illustrative return within that boundary instead of querying real inventory.
+- Flight comparison rows now make the **actual example flight date** more prominent and show departure/arrival times, sample city/airport codes when known, connections, duration, and total price with clearer spacing.
+- Replaced the tall confirmation table and warning box with a **compact selected-itinerary summary**, including real example leg dates and times. The demo disclaimer is a single small line.
+- Maintained ES/EN, responsive layouts, accessible selection, Lucide, Motion, reduced-motion support, shared search state, and the existing Cloudflare Web Analytics snippet.
+
 
 ## Technology
 
@@ -89,6 +99,7 @@ src/
     mock-offer-resolver.ts      # Flight, internal fare + services selection
   features/
     SearchWizard.tsx           # Three steps reused in edit mode
+    CompactSearch.tsx          # Horizontal alternate search with popovers
     FlightResults.tsx          # Compact, clickable recommendations
     SelectionComplete.tsx      # Informational end screen (no checkout)
   state/
@@ -107,3 +118,9 @@ docs/
 This is not an airline offer-search service. A real flight purchase would require live inventory, repricing, carrier rules, tax and fee disclosure, baggage and seat confirmation, traveler identity/age/document requirements, secure payments and booking APIs. No credentials, payment information or airline integrations belong in this public POC.
 
 Screenshots from airline purchase flows were used as research references for service categories, not copied as design assets or used to obtain real pricing.
+
+## Updating an existing Git repository
+
+Do not copy a new ZIP over an old project without reviewing deletions: obsolete files may remain and TypeScript may still try to compile them. For a straightforward v0.9.7 → v0.9.8 upgrade, use the accompanying **changed-files ZIP**, which updates only the edited/new files without changing the rest of your repo. Inspect `git status`, then run `npm test` and `npm run build` before pushing.
+
+The included Cloudflare Web Analytics site token is a public client-side site identifier, not an API secret.

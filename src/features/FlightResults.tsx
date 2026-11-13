@@ -11,9 +11,29 @@ function durationMinutes(leg: FlightLeg): number {
   return parts ? Number(parts[1]) * 60 + Number(parts[2]) : 0;
 }
 
+/** Dates and airports are prominent in comparison, not hidden in a tiny all-caps label. */
+function displayFlightDate(iso: string, locale: 'es' | 'en'): string {
+  const date = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return iso;
+  const formatted = new Intl.DateTimeFormat(locale === 'es' ? 'es-ES' : 'en-GB',
+    { weekday: 'short', day: 'numeric', month: 'short' }).format(date);
+  return formatted.charAt(0).toLocaleUpperCase(locale === 'es' ? 'es-ES' : 'en-GB') + formatted.slice(1);
+}
+
+/** Only show an IATA code when it is known from a fixed, illustrative mapping. */
+function airportShortName(place: string): string {
+  const city = place.trim().toLowerCase().replace(/\s*\([^)]*\)\s*$/, '');
+  const codes: Record<string, string> = {
+    'barcelona': 'BCN', 'madrid': 'MAD', 'roma': 'FCO', 'rome': 'FCO',
+    'parís': 'PAR', 'paris': 'PAR', 'londres': 'LON', 'london': 'LON',
+    'lisboa': 'LIS', 'lisbon': 'LIS', 'tokio': 'TYO', 'tokyo': 'TYO',
+  };
+  return codes[city] || place;
+}
+
 function FlightRow({ offer, selected, onSelect }: { offer: FlightOffer; selected: boolean; onSelect: () => void }) {
   const { query } = useFlightFlow();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const reduceMotion=useReducedMotion();
   const offerLabel = useOfferLabel(), legText = useLegText(), currency = useCurrency();
   const balanced = offer.id === 'balanced';
@@ -31,10 +51,14 @@ function FlightRow({ offer, selected, onSelect }: { offer: FlightOffer; selected
       <div className={`legs ${offer.legs.length === 1 ? 'one-leg' : ''}`}>
         {offer.legs.map(leg => {
           const detail = legText(leg);
+          const departing = leg.label === 'IDA';
+          const from = airportShortName(departing ? query.origin : query.destination);
+          const to = airportShortName(departing ? query.destination : query.origin);
           return <div className="leg" key={leg.label}>
-            <span className="leg-heading">{detail.heading}</span>
-            <strong>{leg.departureTime} – {leg.arrivalTime}</strong>
-            <span className="leg-note">{detail.stops} · {detail.duration}</span>
+            <span className="leg-heading">{t(departing ? 'outbound' : 'inbound')}</span>
+            <strong className="leg-date">{displayFlightDate(leg.dateISO, language)}</strong>
+            <strong className="leg-times">{leg.departureTime} – {leg.arrivalTime}</strong>
+            <span className="leg-note">{from} → {to} · {detail.stops} · {detail.duration}</span>
           </div>;
         })}
       </div>

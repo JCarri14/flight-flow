@@ -55,3 +55,14 @@ Retain the restrained petrol-blue and muted green palette from v0.9.4. Do not ad
 - Focus visibility is preserved in the stylesheet.
 - Motion and decorative icons do **not** change the core offer resolver or the flight-selection workflow.
 - A full screen-reader and cross-browser audit remains out of scope for this prototype.
+
+## Quick search presentation (v0.9.7)
+
+The compact variant keeps the Plus Jakarta Sans and blue-petrol palette. Desktop presents origin, destination, outbound date, optional return, travellers and the search action horizontally, with trip type and needs just above. Below ~1040px it switches to a two-column layout. Dates, travellers and preferences expand locally without leaving the screen. The mode selector remains outside the search card, reinforcing that these are two alternative interfaces over a single model.
+
+## Results and completion refinements (v0.9.8)
+
+- The search-mode selector reads **Paso a paso / Barra de búsqueda** in Spanish and **Step by step / Search bar** in English. It describes two presentation variants, not guaranteed search speeds.
+- Result rows prioritize the **chosen flight dates**, then time range, city/airport code when known, stops and duration. Slightly larger inter-group spacing aids scanning; the cards remain compact and fully clickable.
+- The final confirmation uses a small inline check icon and a compact selected-itinerary summary. It repeats the **actual mock offer dates and times**, not the original flexible date window. The demo disclaimer is a quiet one-line footnote.
+- Reduced-motion behavior and the existing petrol-blue/green palette are unchanged.

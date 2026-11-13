@@ -222,3 +222,58 @@ test('the selected offer can be used as a read-only end-of-demo summary', () => 
   assert.ok(selection.includedServices.length > 0);
   assert.equal(query.origin.trim().length > 0, true);
 });
+
+test('round trip return has just duration or exact date behavior', () => {
+  const q = defaultQuery();
+  q.tripType = 'roundTrip';
+  q.departureMode = 'exact';
+  q.departureDate = '2027-03-04';
+  q.returnMode = 'duration';
+  q.stayLength = '4-7';
+  const durationOffer = resolveMockOffers(q)[0];
+  assert.equal(durationOffer.legs.length, 2);
+  assert.equal(durationOffer.legs[0].dateISO, '2027-03-04');
+  assert.equal(durationOffer.legs[1].dateISO, '2027-03-09');
+  assert.match(dateSummary(q, 'es'), /4–7 días/);
+  q.returnMode = 'exact';
+  q.returnDate = '2027-03-16';
+  const exactOffer = resolveMockOffers(q)[0];
+  assert.equal(exactOffer.legs[1].dateISO, '2027-03-16');
+  assert.match(dateSummary(q, 'en'), /return 16 Mar/);
+});
+
+test('no-preference duration is explicitly bounded by 30 days', () => {
+  const q = defaultQuery();
+  q.tripType = 'roundTrip';
+  q.departureMode = 'exact';
+  q.departureDate = '2027-04-02';
+  q.stayLength = 'any';
+  const offer = resolveMockOffers(q)[0];
+  const from = new Date(offer.legs[0].dateISO + 'T12:00:00');
+  const to = new Date(offer.legs[1].dateISO + 'T12:00:00');
+  const days = Math.round((to.getTime() - from.getTime()) / 86400000);
+  assert.ok(days >= 1 && days <= 30);
+  assert.match(dateSummary(q, 'es'), /hasta 30 días/);
+  assert.match(dateSummary(q, 'en'), /up to 30 days/);
+});
+
+test('15-21 day duration produces a return within the selected range', () => {
+  const q = defaultQuery();
+  q.tripType = 'roundTrip';
+  q.departureMode = 'exact';
+  q.departureDate = '2027-01-09';
+  q.stayLength = '15-21';
+  const offer = resolveMockOffers(q)[0];
+  const days = (new Date(offer.legs[1].dateISO+'T12:00:00') - new Date(offer.legs[0].dateISO+'T12:00:00')) / 86400000;
+  assert.ok(days >= 15 && days <= 21);
+});
+
+test('selection screen can use actual itinerary dates, not the search window', () => {
+  const q = defaultQuery();
+  q.departureMode = 'month';
+  const offer = resolveMockOffers(q)[0];
+  assert.ok(/^\d{4}-\d\d-\d\d$/.test(offer.legs[0].dateISO));
+  assert.equal(dateSummary(q, 'es'), 'Este mes');
+  assert.notEqual(offer.legs[0].dateISO, dateSummary(q, 'es'));
+  assert.match(offer.legs[0].departureTime, /^\d\d:\d\d$/);
+});

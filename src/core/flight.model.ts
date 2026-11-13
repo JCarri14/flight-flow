@@ -1,7 +1,7 @@
 export type TripType = 'roundTrip' | 'oneWay';
 export type DepartureMode = 'today' | 'tomorrow' | 'week' | 'month' | 'nextMonth' | 'year' | 'next3Months' | 'next12Months' | 'nextYear' | 'exact';
-export type ReturnMode = 'duration' | 'exact' | 'flexible';
-export type StayLength = 'weekend' | '1-3' | '4-7' | '8-14' | '15+';
+export type ReturnMode = 'duration' | 'exact';
+export type StayLength = 'weekend' | '1-3' | '4-7' | '8-14' | '15-21' | 'any';
 export type RecommendationKind = 'cheapest' | 'balanced';
 export type FareFamily = 'basic' | 'classic' | 'flex';
 
@@ -142,11 +142,10 @@ export function dateSummary(query: FlightSearchQuery, locale: 'es' | 'en' = 'es'
   const outbound = query.departureMode === 'exact' ? formatDate(query.departureDate, locale) : departures[query.departureMode];
   if (query.tripType === 'oneWay') return outbound;
   if (query.returnMode === 'exact') return `${outbound} · ${es ? 'vuelta' : 'return'} ${formatDate(query.returnDate, locale)}`;
-  if (query.returnMode === 'flexible') return `${outbound} · ${es ? 'regreso flexible' : 'flexible return'}`;
   const lengths: Record<StayLength, string> = es ? {
-    weekend: 'fin de semana', '1-3': '1–3 días', '4-7': '4–7 días', '8-14': '8–14 días', '15+': 'más de 14 días',
+    weekend: 'fin de semana', '1-3': '1–3 días', '4-7': '4–7 días', '8-14': '8–14 días', '15-21': '15–21 días', any: 'hasta 30 días',
   } : {
-    weekend: 'weekend', '1-3': '1–3 days', '4-7': '4–7 days', '8-14': '8–14 days', '15+': 'more than 14 days',
+    weekend: 'weekend', '1-3': '1–3 days', '4-7': '4–7 days', '8-14': '8–14 days', '15-21': '15–21 days', any: 'up to 30 days',
   };
   return `${outbound} · ${lengths[query.stayLength]}`;
 }

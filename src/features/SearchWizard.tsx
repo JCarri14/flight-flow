@@ -19,8 +19,8 @@ const basicNeeds: ReadonlyArray<readonly [keyof TravelNeeds, 'cabinBag'|'checked
 const extraNeeds: ReadonlyArray<readonly [keyof TravelNeeds, 'flexibleChanges'|'priorityBoarding'|'fastTrack'|'loungeAccess']> = [
   ['flexibleChanges','flexibleChanges'],['priorityBoarding','priorityBoarding'],['fastTrack','fastTrack'],['loungeAccess','loungeAccess'],
 ];
-const stayChoices: Array<[StayLength,'weekend'|'days13'|'days47'|'days814'|'days15']> = [
-  ['weekend','weekend'],['1-3','days13'],['4-7','days47'],['8-14','days814'],['15+','days15'],
+const stayChoices: Array<[StayLength,'weekend'|'days13'|'days47'|'days814'|'days1521'|'anyLength']> = [
+  ['weekend','weekend'],['1-3','days13'],['4-7','days47'],['8-14','days814'],['15-21','days1521'],['any','anyLength'],
 ];
 const todayDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 
@@ -108,11 +108,11 @@ export function SearchWizard(){
         </div>
         {draft.departureMode==='exact'&&<label className="input-field date-input"><span>{t('departureDate')}</span><input type="date" min={todayDate()} value={draft.departureDate} onChange={e=>update('departureDate',e.target.value)}/></label>}
         {draft.tripType==='roundTrip'&&<div className="return-area"><div className="field-title">{t('whenReturn')}</div><div className="segmented return-modes" role="group" aria-label={t('whenReturn')}>
-          {([['duration','duration'],['exact','exact'],['flexible','flexible']] as Array<[ReturnMode,'duration'|'exact'|'flexible']>).map(([value,key])=><button type="button" key={value} className={draft.returnMode===value?'chosen':''} onClick={()=>update('returnMode',value)}>{t(key)}</button>)}
+          {([['duration','duration'],['exact','exact']] as Array<[ReturnMode,'duration'|'exact']>).map(([value,key])=><button type="button" key={value} className={draft.returnMode===value?'chosen':''} onClick={()=>update('returnMode',value)}>{t(key)}</button>)}
         </div>
           {draft.returnMode==='duration'&&<label className="input-field"><span>{t('stay')}</span><select value={draft.stayLength} onChange={e=>update('stayLength',e.target.value as StayLength)}>{stayChoices.map(([value,key])=><option key={value} value={value}>{t(key)}</option>)}</select></label>}
           {draft.returnMode==='exact'&&<label className="input-field"><span>{t('returnDate')}</span><input type="date" min={earliestDepartureISO(draft)||todayDate()} value={draft.returnDate} onChange={e=>update('returnDate',e.target.value)}/></label>}
-          {draft.returnMode==='flexible'&&<p className="soft-note">{t('returnFlexible')}</p>}
+          {draft.returnMode==='duration'&&draft.stayLength==='any'&&<p className="soft-note">{t('anyLengthNote')}</p>}
         </div>}
       </>}
       {step===2&&<><h1>{t('howTitle')}</h1><p className="step-description">{t('howSub')}</p>

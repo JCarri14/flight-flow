@@ -1,17 +1,18 @@
 import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowUpRight, Info } from 'lucide-react';
+import { ArrowUpRight, Info, ListChecks, Search } from 'lucide-react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useFlightFlow } from './state/FlightFlowContext';
 import { useLanguage } from './i18n/LanguageContext';
 import { SearchWizard } from './features/SearchWizard';
+import { CompactSearch } from './features/CompactSearch';
 import { FlightResults } from './features/FlightResults';
 import { SelectionComplete } from './features/SelectionComplete';
 import { AboutConcept } from './components/AboutConcept';
 import { StatusLoading } from './components/Shared';
 
 export function App(){
-  const {loading,hasResults,selectedOffer}=useFlightFlow();
+  const {loading,hasResults,selectedOffer,searchMode,setSearchMode}=useFlightFlow();
   const {language,setLanguage,t}=useLanguage();
   const [aboutOpen,setAboutOpen]=useState(false);
   const location=useLocation();
@@ -28,7 +29,11 @@ export function App(){
         <button type="button" className="about-button" aria-label={t('about')} onClick={()=>setAboutOpen(true)}><span className="about-full">{t('about')} <ArrowUpRight aria-hidden="true" size={14}/></span><span className="about-short" aria-hidden="true"><Info size={19}/></span></button>
       </div>
     </div></header>
-    <main className={location.pathname==='/'?'app-main wizard-main':'app-main'}>
+    <main className={location.pathname==='/' ? `app-main wizard-main ${searchMode==='compact'?'quick-main':''}` : 'app-main'}>
+      {location.pathname==='/' && !loading && <div className="search-mode-switch" role="group" aria-label={t('quickModeA11y')}>
+        <button type="button" className={searchMode==='guided'?'mode-choice active':'mode-choice'} aria-pressed={searchMode==='guided'} onClick={()=>setSearchMode('guided')}><ListChecks size={16} aria-hidden="true"/>{t('guidedSearch')}</button>
+        <button type="button" className={searchMode==='compact'?'mode-choice active':'mode-choice'} aria-pressed={searchMode==='compact'} onClick={()=>setSearchMode('compact')}><Search size={16} aria-hidden="true"/>{t('quickSearch')}</button>
+      </div>}
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={loading ? `loading-${loading}` : location.pathname}
@@ -39,7 +44,7 @@ export function App(){
           transition={{ duration: reduceMotion ? 0 : 0.19, ease: 'easeOut' }}
         >
           {loading?<StatusLoading/>:<Routes location={location}>
-            <Route path="/" element={<SearchWizard/>}/>
+            <Route path="/" element={searchMode==='compact'?<CompactSearch/>:<SearchWizard/>}/>
             <Route path="/results" element={hasResults?<FlightResults/>:<Navigate to="/" replace/>}/>
             <Route path="/complete" element={selectedOffer?<SelectionComplete/>:<Navigate to={hasResults?'/results':'/'} replace/>}/>
             <Route path="*" element={<Navigate to="/" replace/>}/>
